@@ -3,7 +3,7 @@ from dataclasses import dataclass,asdict
 import json,re
 
 MODES=('Follow system','Reduce motion','Off')
-SPEEDS={'Quick':400,'Standard':650,'Gentle':1000}
+SPEEDS={'Quick':1100,'Standard':1900,'Gentle':3000}
 EASING='cubic-bezier(0.22, 1, 0.36, 1)'
 
 @dataclass(frozen=True)
@@ -13,7 +13,7 @@ class MotionSettings:
     def __post_init__(self):
         if self.mode not in MODES or self.speed not in SPEEDS:raise ValueError('Unknown motion setting')
     def payload(self) -> dict:
-        return {**asdict(self),'duration':SPEEDS[self.speed],'updateDuration':160,'reducedDuration':120,'easing':EASING,'physicsStep':{'Quick':.75,'Standard':.5,'Gentle':.25}[self.speed]}
+        return {**asdict(self),'duration':SPEEDS[self.speed],'updateDuration':400,'reducedDuration':120,'easing':EASING,'physicsStep':{'Quick':.75,'Standard':.5,'Gentle':.25}[self.speed]}
 
 def child_motion_html(document: str,settings: MotionSettings,kind: str,allow_physics: bool=False) -> str:
     """Apply shared controls to trusted, generated Plotly/PyVis iframe documents."""
@@ -53,7 +53,7 @@ def child_motion_html(document: str,settings: MotionSettings,kind: str,allow_phy
    if(['play','replay'].includes(command)){
     const frames=(command==='play'&&paused)?null:window.citypulseFrameNames;
     const current=++run;timeline.style.pointerEvents='none';status.textContent='Playing · '+policy.speed+' speed.';active=true;
-    Plotly.animate(timeline,frames,{fromcurrent:command==='play'&&paused,mode:'immediate',frame:{duration:Math.max(16,policy.duration/window.citypulseFrameNames.length),redraw:true},transition:{duration:0}}).then(()=>{if(!paused&&current===run){exact();active=false;status.textContent='Final state · exact values available.';}}).catch(()=>{if(current===run)final();});paused=false;
+    Plotly.animate(timeline,frames,{fromcurrent:command==='play'&&paused,mode:'immediate',frame:{duration:Math.max(90,Math.round(policy.duration*3/window.citypulseFrameNames.length)),redraw:true},transition:{duration:0}}).then(()=>{if(!paused&&current===run){exact();active=false;status.textContent='Final state · exact values available.';}}).catch(()=>{if(current===run)final();});paused=false;
    }
   }
  }
