@@ -13,6 +13,7 @@ from src.motion import MotionSettings,MODES,SPEEDS,child_motion_html
 from src.motion_ui import render_motion
 from src.visuals import CSS,HERO,COLORS,SEQUENTIAL,style_figure,overview_figure,monthly_figure,ranked_figure,adjacency_figure,timeline_html
 from src.data import load_snapshot,validate_snapshot,load_topics,resolve_photo,IntegrityError
+from src.clustering_ui import render_clustering_lab
 from src.analysis import select_reviews,monthly_reviews,term_table,restaurant_graph,graph_details,shared_reviewers,spatial_clusters,image_histogram
 
 ROOT=Path(__file__).resolve().parent
@@ -133,7 +134,7 @@ with st.expander('Selection details and export'):
     st.write('Review dates: '+(' to '.join(map(str,period)) if period else 'All available dates'))
     st.write('Fixed topics: '+(', '.join(map(str,st.session_state.topic_filter)) or 'All / no topic filter'))
     export(rsel)
-tabs=st.tabs(['Overview','Trends','Map','Reviews & Topics','Photos','Networks','Methods'],key='view',on_change='rerun')
+tabs=st.tabs(['Overview','Trends','Map','Reviews & Topics','Photos','Networks','Clustering Lab','Methods'],key='view',on_change='rerun')
 
 if tabs[0].open:
  with tabs[0]:
@@ -378,7 +379,11 @@ if tabs[5].open:
 
 if tabs[6].open:
  with tabs[6]:
-    st.caption('07 / METHODS & INTERPRETATION')
+    render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,preview_mode)
+
+if tabs[7].open:
+ with tabs[7]:
+    st.caption('08 / METHODS & INTERPRETATION')
     st.subheader('Understand what the evidence can support')
     st.write('Yelp records are a selected platform snapshot, not a population census. Ratings are reported experiences, not verified business quality. Reviews are not visits; photos are business-linked, not review-linked. Reviewer overlap does not establish social ties.')
     st.write('One immutable snapshot supports all modalities. Category filters use OR; review date, exact term and topic filters use AND. Focus is separate from corpus filtering. Invalid dates are excluded only when applying date filters.')
