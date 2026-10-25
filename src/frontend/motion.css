@@ -1,0 +1,9 @@
+.cp-motion-master,.cp-motion-local{font:12px/1.5 Arial,sans-serif;color:#334C60;box-sizing:border-box}
+.cp-motion-master{border:1px solid #CAD6DF;border-radius:8px;padding:10px;background:#F4F8F9;margin:4px 0 12px}
+.cp-motion-actions{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.cp-motion-actions button{font:600 12px/1.4 Arial,sans-serif;background:#FFFFFF;color:#006A71;border:1px solid #A9C3C8;border-radius:5px;min-height:32px;padding:5px 9px;cursor:pointer}
+.cp-motion-actions button:hover{background:#E4F0F0}.cp-motion-actions button:focus-visible{outline:3px solid #007C83;outline-offset:2px}
+.cp-motion-actions button:disabled{opacity:.5;cursor:default}
+.cp-motion-local{border-top:1px solid #E2E8EE;margin:4px 8px;padding:6px 0}
+.cp-motion-status{color:#536579;display:block;min-height:18px}
+@media(prefers-reduced-motion:reduce){.cp-motion-master *,.cp-motion-local *{animation:none!important;transition:none!important}}
