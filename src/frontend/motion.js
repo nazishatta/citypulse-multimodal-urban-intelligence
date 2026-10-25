@@ -5,6 +5,9 @@ function mountCityPulseMotion(root,options={}) {
  const media=matchMedia('(prefers-reduced-motion: reduce)');
  const settings=options.settings||{mode:'Follow system',duration:650,updateDuration:160,reducedDuration:120,easing:'cubic-bezier(0.22, 1, 0.36, 1)'};
  const tab=options.tab||'Preview';
+ // A tab activation should replay its entrance once; ordinary rerenders should not.
+ const activated=memory.activeTab!==tab;
+ memory.activeTab=tab;
  const revision=options.revision||'';
  scope.querySelectorAll('.cp-motion-local').forEach(el=>el.remove());
  const units=new Map();let disposed=false,scheduled=false;
@@ -112,7 +115,7 @@ function mountCityPulseMotion(root,options={}) {
   const unit={element,id:tab+':'+id,kind,generation:0,animations:[],state:'final',guard:[element],...extra};units.set(element,unit);
   const first=!memory.seen.has(unit.id);const changed=memory.revisions.get(unit.id)!==localRevision;
   memory.seen.add(unit.id);memory.revisions.set(unit.id,localRevision);
-  unit.autoKind=first?'entry':'update';unit.pending=first||changed; // Activation triggers first-visit reveal; repeat switches retain final values.
+  unit.autoKind=(first||activated)?'entry':'update';unit.pending=first||changed||activated; // Revisit plays once on tab activation, not on every rerun.
   if(kind!=='heading'){
    const toolbar=document.createElement('div');toolbar.className='cp-motion-local';toolbar.setAttribute('role','group');toolbar.setAttribute('aria-label','Motion for '+(element.layout?.title?.text||kind));
    const controls=document.createElement('div');controls.className='cp-motion-actions';toolbar.append(controls);buttons(controls,unit);
