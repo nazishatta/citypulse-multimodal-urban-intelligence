@@ -5,7 +5,7 @@ from src.motion import MotionSettings,SPEEDS,child_motion_html
 @pytest.mark.parametrize('speed,ms',SPEEDS.items())
 def test_shared_duration_and_easing(speed,ms):
  p=MotionSettings(speed=speed).payload()
- assert p['duration']==ms and p['updateDuration']==160 and p['reducedDuration']==120
+ assert p['duration']==ms and p['updateDuration']==400 and p['reducedDuration']==120
  assert p['easing']=='cubic-bezier(0.22, 1, 0.36, 1)'
 
 @pytest.mark.parametrize('kwargs',[{'mode':'invalid'},{'speed':'invalid'}])
