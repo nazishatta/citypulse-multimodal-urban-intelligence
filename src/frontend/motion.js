@@ -70,7 +70,7 @@ function mountCityPulseMotion(root,options={}) {
   finish(unit);const generation=unit.generation;
   const simple=settings.mode==='Reduce motion'||autoKind==='update';
   const ms=settings.mode==='Reduce motion'?settings.reducedDuration:(autoKind==='update'?settings.updateDuration:settings.duration);
-  const animations=targets(unit,simple).map(([el,keyframes],i)=>{const delay=simple?0:Math.min(i*4,60);return el.animate(keyframes,{duration:Math.max(1,ms-delay),delay,easing:settings.easing,fill:'none'});});
+  const animations=targets(unit,simple).map(([el,keyframes],i,all)=>{const delay=simple?0:Math.min(800,Math.round(i*Math.min(65,ms/Math.max(all.length,1))));return el.animate(keyframes,{duration:Math.max(200,ms-delay),delay,easing:settings.easing,fill:'none'});});
   unit.animations=animations;guard(unit,true);report(unit,'playing');
   Promise.all(animations.map(a=>a.finished.catch(()=>null))).then(()=>{if(!disposed&&generation===unit.generation){guard(unit,false);unit.animations=[];report(unit,'final');}});
  }
@@ -112,7 +112,7 @@ function mountCityPulseMotion(root,options={}) {
   const unit={element,id:tab+':'+id,kind,generation:0,animations:[],state:'final',guard:[element],...extra};units.set(element,unit);
   const first=!memory.seen.has(unit.id);const changed=memory.revisions.get(unit.id)!==localRevision;
   memory.seen.add(unit.id);memory.revisions.set(unit.id,localRevision);
-  unit.autoKind=first?'entry':'update';unit.pending=first||changed;
+  unit.autoKind=first?'entry':'update';unit.pending=first||changed; // Activation triggers first-visit reveal; repeat switches retain final values.
   if(kind!=='heading'){
    const toolbar=document.createElement('div');toolbar.className='cp-motion-local';toolbar.setAttribute('role','group');toolbar.setAttribute('aria-label','Motion for '+(element.layout?.title?.text||kind));
    const controls=document.createElement('div');controls.className='cp-motion-actions';toolbar.append(controls);buttons(controls,unit);
