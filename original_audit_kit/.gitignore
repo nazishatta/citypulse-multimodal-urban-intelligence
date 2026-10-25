@@ -1,0 +1,9 @@
+raw/
+*.tar
+*.tar.gz
+*.zip
+.env
+.streamlit/secrets.toml
+__pycache__/
+.pytest_cache/
+audit_results/
