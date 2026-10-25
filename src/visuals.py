@@ -8,42 +8,41 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-INK='#172B40'
-MUTED='#536579'
-TEAL='#007C83'
-AMBER='#A65F10'
-COLORS=['#007C83','#A65F10','#6554A4','#276A9B','#A63669','#367A35','#536878','#884A24']
-SEQUENTIAL=['#F0F5F5','#C9E4E2','#88C4C0','#439F9D','#007C83','#004E57']
-
+INK='#ECF3F7'
+MUTED='#A9BBC7'
+TEAL='#58D6C1'
+AMBER='#FDBA74'
+COLORS=['#58D6C1','#FDBA74','#AA9BFF','#76B5F9','#FD8BB8','#C0DA80','#8FBBC9','#D7A67A']
+SEQUENTIAL=['#25303B','#31556A','#337E8D','#41A7AD','#58D6C1','#A8F4E0']
 CSS='''<style>
-.stApp {background:#F4F6F8;color:#172B40}
-.block-container {max-width:1450px;padding-top:2.2rem;padding-bottom:3rem}
-h1,h2,h3 {color:#172B40;letter-spacing:-.025em}
-h2 {font-size:1.6rem!important} h3 {font-size:1.25rem!important}
-[data-testid="stSidebar"] {background:#FFFFFF;border-right:1px solid #DCE3EA}
-[data-testid="stMetric"] {background:#FFFFFF;border:1px solid #DCE3EA;border-top:3px solid #007C83;border-radius:10px;padding:15px 18px;min-height:112px}
-[data-testid="stMetricLabel"] {color:#536579;font-weight:600}
-[data-testid="stMetricValue"] {color:#172B40;font-variant-numeric:tabular-nums}
-[data-testid="stPlotlyChart"] {background:#FFFFFF;border:1px solid #DCE3EA;border-radius:10px;padding:6px}
-[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p, [data-testid="stCaptionContainer"] span {color:#536579!important}
-[data-testid="stTabs"] [role="tablist"] {gap:1rem;border-bottom:1px solid #CFD9E2;margin-top:1.2rem}
-[data-testid="stTabs"] [role="tab"] {padding:12px 2px;font-weight:600}
-[data-testid="stTabs"] [aria-selected="true"] {color:#006A71}
-[data-testid="stExpander"] {background:#FFFFFF;border-radius:8px}
-.citypulse-hero {background:#132C40;color:#FFFFFF;border-radius:14px;padding:30px 34px;margin-bottom:24px;border-left:5px solid #70C7C5}
-.citypulse-hero .eyebrow {color:#ACD9DC;font-size:.76rem;letter-spacing:.16em;font-weight:700;margin-bottom:10px}
-.citypulse-hero h1 {color:#FFFFFF;font-size:3.2rem;line-height:1.1;margin:0 0 12px;font-weight:750}
-.citypulse-hero p {color:#E2EDF3;max-width:800px;font-size:1.05rem;margin:0;line-height:1.55}
-.citypulse-note {background:#E8F2F2;border-left:3px solid #007C83;padding:13px 16px;border-radius:0 6px 6px 0;margin:12px 0 20px;color:#173E48}
-.citypulse-kicker {font-size:.75rem;letter-spacing:.12em;color:#536579;font-weight:700;margin-top:1.5rem}
-.citypulse-filter {display:inline-block;background:#FFFFFF;border:1px solid #CAD6DF;border-radius:5px;padding:4px 9px;margin:3px 5px 3px 0;font-size:.8rem;color:#334C60}
-button:focus-visible,a:focus-visible,input:focus-visible,[role="tab"]:focus-visible {outline:3px solid #007C83!important;outline-offset:3px!important}
-@media(max-width:700px) {.block-container{padding:1rem}.citypulse-hero{padding:22px}.citypulse-hero h1{font-size:2.4rem}[data-testid="stTabs"] [role="tablist"]{gap:.85rem}}
+.stApp {background:#101318;color:#ECF3F7}
+.block-container {max-width:1500px;padding-top:1.8rem;padding-bottom:4rem}
+h1,h2,h3 {color:#ECF3F7;letter-spacing:-.03em}
+h2 {font-size:1.7rem!important} h3 {font-size:1.25rem!important}
+[data-testid="stSidebar"] {background:#151A21;border-right:1px solid #303944}
+[data-testid="stMetric"] {background:linear-gradient(145deg,#1B222C,#171D25);border:1px solid #33414D;border-top:2px solid #58D6C1;border-radius:14px;padding:16px 20px;min-height:112px}
+[data-testid="stMetricLabel"] {color:#B4C6D0;font-weight:600}
+[data-testid="stMetricValue"] {color:#F4FAFC;font-variant-numeric:tabular-nums}
+[data-testid="stPlotlyChart"] {background:#191F27;border:1px solid #303C47;border-radius:15px;padding:10px}
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p, [data-testid="stCaptionContainer"] span {color:#B0C0CB!important}
+[data-testid="stTabs"] [role="tablist"] {gap:1rem;border-bottom:1px solid #34414D;margin-top:1.1rem}
+[data-testid="stTabs"] [role="tab"] {padding:13px 4px;font-weight:650}
+[data-testid="stTabs"] [aria-selected="true"] {color:#58D6C1}
+[data-testid="stExpander"] {background:#191F27;border:1px solid #34414D;border-radius:10px}
+.citypulse-hero {background:radial-gradient(ellipse at 80% 8%,#254F55 0%,transparent 50%),linear-gradient(120deg,#1B2835,#111B25 80%);color:#F5FAFC;border-radius:19px;padding:40px 46px;margin-bottom:23px;border:1px solid #35565A;border-left:5px solid #58D6C1;box-shadow:0 20px 60px #0004}
+.citypulse-hero .eyebrow {color:#A7E5DE;font-size:.74rem;letter-spacing:.2em;font-weight:750;margin-bottom:14px}
+.citypulse-hero h1 {color:#FFFFFF;font-size:3.35rem;line-height:1.1;margin:0 0 16px;font-weight:760}
+.citypulse-hero p {color:#D3E4EB;max-width:900px;font-size:1.08rem;margin:0;line-height:1.6}
+.citypulse-note {background:#1D3037;border-left:3px solid #58D6C1;padding:14px 18px;border-radius:0 9px 9px 0;margin:12px 0 20px;color:#D1EEEA}
+.citypulse-kicker {font-size:.75rem;letter-spacing:.12em;color:#A9BBC7;font-weight:700;margin-top:1.5rem}
+.citypulse-filter {display:inline-block;background:#202C35;border:1px solid #4B5C68;border-radius:6px;padding:4px 9px;margin:3px 5px 3px 0;font-size:.8rem;color:#E5F1F4}
+button:focus-visible,a:focus-visible,input:focus-visible,[role="tab"]:focus-visible {outline:3px solid #58D6C1!important;outline-offset:3px!important}
+@media(max-width:700px) {.block-container{padding:1rem}.citypulse-hero{padding:24px}.citypulse-hero h1{font-size:2.4rem}[data-testid="stTabs"] [role="tablist"]{gap:.8rem}}
 @media(prefers-reduced-motion:reduce) {.stApp *, .stApp *::before,.stApp *::after {scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>'''
 HERO='''<section class="citypulse-hero" aria-label="CityPulse research explorer">
-<div class="eyebrow">URBAN EXPERIENCE ATLAS · MULTIMODAL RESEARCH</div>
-<h1>CityPulse</h1><p>Read the city through its places, reviews and connections.<br>One study population. Five complementary perspectives.</p></section>'''
+<div class="eyebrow">CITYPULSE / MULTIMODAL URBAN EXPERIENCE</div>
+<h1>CityPulse <span style="font-size:1.1rem;color:#58D6C1;font-weight:500">/ RESEARCH ATLAS</span></h1><p>Explore places, stories, visual culture and shared audiences.<br>One coordinated research population · Seven interactive views.</p></section>'''
 
 def wrap_label(value: object,width: int=28) -> str:
     return '<br>'.join(html.escape(line) for line in textwrap.wrap(str(value),width=width,break_long_words=True))
@@ -55,16 +54,16 @@ def style_figure(fig: go.Figure,height: int | None=None) -> go.Figure:
     is_map=bool(types & {'scattermap','choropleth'})
     horizontal=any(t.type=='bar' and t.orientation=='h' for t in fig.data)
     if height is None:height=max(430,min(1000,160+30*max((len(t.y) for t in fig.data if t.type=='bar' and t.orientation=='h'),default=0))) if horizontal else (620 if is_matrix else 450)
-    fig.update_layout(template='plotly_white',height=height,paper_bgcolor='#FFFFFF',plot_bgcolor='#FFFFFF',
+    fig.update_layout(template='plotly_dark',height=height,paper_bgcolor='#191F27',plot_bgcolor='#191F27',
         font=dict(family='Arial, sans-serif',size=13,color=INK),
         title=dict(x=.035,xanchor='left',y=.96,font=dict(size=17,color=INK)),
         margin=dict(l=35,r=35,t=85,b=75),
         legend=dict(title_text='',orientation='h',y=-.2,x=0,font=dict(size=12)),
         hoverlabel=dict(bgcolor=INK,font=dict(color='#FFFFFF',size=13)),
-        colorway=COLORS,modebar=dict(bgcolor='#FFFFFF',color=MUTED,activecolor=TEAL))
+        colorway=COLORS,modebar=dict(bgcolor='#191F27',color=MUTED,activecolor=TEAL))
     if not is_map:
-        fig.update_xaxes(showline=False,zeroline=False,gridcolor='#E7EDF2',automargin=True,title_font=dict(size=13),tickfont=dict(size=12))
-        fig.update_yaxes(showline=False,zeroline=False,gridcolor='#E7EDF2',automargin=True,title_font=dict(size=13),tickfont=dict(size=12))
+        fig.update_xaxes(showline=False,zeroline=False,gridcolor='#34414D',automargin=True,title_font=dict(size=13),tickfont=dict(size=12))
+        fig.update_yaxes(showline=False,zeroline=False,gridcolor='#34414D',automargin=True,title_font=dict(size=13),tickfont=dict(size=12))
     for trace in fig.data:
         if trace.type=='bar':
             trace.update(marker_line_width=0)
