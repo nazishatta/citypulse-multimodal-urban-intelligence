@@ -1,0 +1,13 @@
+overview motion ready
+native selection callback preserved
+tab rendered: Trends
+tab rendered: Map
+tab rendered: Reviews & Topics
+tab rendered: Photos
+tab rendered: Networks
+tab rendered: Methods
+reduced motion honored
+embedded timeline shared controls passed
+PyVis shared controls and reduced motion passed
+narrow-screen preview / speed / off controls passed
+{"status":"PASS","checks":["native chart render","replay","pause","final-state pointer restoration","unchanged review count","native selection callback","seven tabs","live system reduced-motion change","timeline parent controls","network physics pause/final/reduced-motion","narrow preview/speed/off"],"browser":"153.0.8010.0","dataset":"synthetic fixture only"}

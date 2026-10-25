@@ -1,0 +1,5 @@
+CityPulse v4 shared motion revision
+Full pytest suite: 64 tests passed (last complete run 23.96 seconds; exit 0).
+Python compilation and frontend JavaScript syntax checks passed.
+Browser journey: PASS on Chromium 153.0.8010.0, generated synthetic inputs only.
+See BROWSER_RESULTS.txt and MOTION_SYSTEM_V4.md for scope and remaining gates.
