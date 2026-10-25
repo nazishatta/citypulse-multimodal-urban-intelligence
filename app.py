@@ -18,7 +18,7 @@ from src.analysis import select_reviews,monthly_reviews,term_table,restaurant_gr
 ROOT=Path(__file__).resolve().parent
 st.set_page_config(page_title='CityPulse · Urban Experience Atlas',page_icon='◉',layout='wide')
 st.markdown(CSS,unsafe_allow_html=True)
-px.defaults.template='plotly_white'
+px.defaults.template='plotly_dark'
 px.defaults.color_discrete_sequence=COLORS
 
 @st.cache_data(show_spinner=False)
@@ -61,8 +61,19 @@ def export(r,label='Download selected review metadata',key='metadata'):
     st.download_button(label,r[fields].sort_values('review_id').to_csv(index=False),key+'.csv','text/csv',key=key)
 
 st.markdown(HERO,unsafe_allow_html=True)
-if os.environ.get('CITYPULSE_SYNTHETIC_PREVIEW')=='1':st.warning('SYNTHETIC DESIGN PREVIEW · Generated test records only. No real Yelp observations or research findings.')
 snapshot=os.environ.get('CITYPULSE_DATA_DIR',str(ROOT/'data/processed'))
+preview_mode=False
+if not (Path(snapshot)/'audit.json').exists() and not os.environ.get('CITYPULSE_DATA_DIR') and os.environ.get('CITYPULSE_DISABLE_DEMO')!='1':
+    from src.demo_preview import ensure_preview
+    try:
+        preview_path,preview_photos=ensure_preview(ROOT)
+        snapshot=str(preview_path)
+        os.environ['CITYPULSE_ASSET_ROOT']=str(preview_photos)
+        preview_mode=True
+    except (OSError,ValueError) as exc:
+        st.error(f'Could not prepare the synthetic design preview: {exc}')
+if preview_mode:
+    st.error('SYNTHETIC PREVIEW MODE — ALL restaurants, reviews, locations and illustrations are GENERATED DEMONSTRATIONS. No Yelp research evidence is shown. Do not use these counts in coursework findings.')
 with st.sidebar:
     st.header('Your study population')
     st.caption('Define the population, then focus a restaurant to follow its evidence across views.')
