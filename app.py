@@ -76,12 +76,12 @@ if not (Path(snapshot)/'audit.json').exists() and not os.environ.get('CITYPULSE_
     except (OSError,ValueError) as exc:
         st.error(f'Could not prepare the synthetic design preview: {exc}')
 if preview_mode:
-    st.error('SYNTHETIC PREVIEW MODE — ALL restaurants, reviews, locations and illustrations are GENERATED DEMONSTRATIONS. No Yelp research evidence is shown. Do not use these counts in coursework findings.')
+    st.markdown('<div style="background:#25271f;border:1px solid #8a7841;border-left:4px solid #e8b85e;border-radius:10px;padding:13px 18px;color:#f1dcaa;margin:10px 0 18px"><strong>DEMO DATA · Design Preview</strong> — Restaurants, reviews, coordinates and illustrations are synthetic. Explore the interactions, but do not report these values as Yelp research findings.</div>',unsafe_allow_html=True)
 with st.sidebar:
     st.header('Your study population')
     st.caption('Define the population, then focus a restaurant to follow its evidence across views.')
     st.selectbox('Motion mode',MODES,key='motion_mode',help='System reduced motion always takes priority. Reduce motion uses only a short fade; Off shows final states immediately.')
-    st.select_slider('Motion speed',options=list(SPEEDS),value='Gentle',key='motion_speed')
+    st.select_slider('Motion speed',options=list(SPEEDS),value='Standard',key='motion_speed')
 motion=MotionSettings(st.session_state.motion_mode,st.session_state.motion_speed)
 if not (Path(snapshot)/'audit.json').exists():
     st.info('No prepared Yelp snapshot is installed. No demonstration data is presented as real Yelp evidence.')
@@ -179,7 +179,7 @@ if tabs[1].open:
         chart(fig_heat,grid[['Month','Reviews']],'calendar_heatmap')
         st.markdown(f'<div class="citypulse-note">Observed coverage: {len(counts):,} calendar months · Peak posted-review month: {html.escape(str(peak.Month))} ({int(peak.Reviews):,} reviews). Missing months are filled with zero counts; the rating line keeps gaps.</div>',unsafe_allow_html=True)
         with st.expander('Optional temporal replay'):
-            st.caption('A progressive reveal of the same monthly counts, with fixed axes. Replay is separate from filters. System reduced-motion preference prevents automatic playback; Replay and Pause remain available.')
+            st.caption('Guided playback uses the same monthly counts and fixed scales. Pause, Replay and Show final state are available. Reduced-motion settings stop automatic playback.')
             if st.checkbox('Enable temporal replay',key='timeline_replay'):
                 st.iframe(child_motion_html(timeline_html(counts,motion),motion,'timeline'),height=550,alt='Monthly review timeline with shared playback controls')
         st.caption('Review posting date is not visit date. Edge months may be partial; dataset coverage and review selection can affect trends. No uncertainty interval is implied by the line.')
