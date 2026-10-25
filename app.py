@@ -14,6 +14,8 @@ from src.motion_ui import render_motion
 from src.visuals import CSS,HERO,COLORS,SEQUENTIAL,style_figure,overview_figure,monthly_figure,ranked_figure,adjacency_figure,timeline_html
 from src.data import load_snapshot,validate_snapshot,load_topics,resolve_photo,IntegrityError
 from src.clustering_ui import render_clustering_lab
+from src.stories import trend_story,review_story,term_by_restaurant
+from src.story_ui import render_story
 from src.analysis import select_reviews,monthly_reviews,term_table,restaurant_graph,graph_details,shared_reviewers,spatial_clusters,image_histogram
 
 ROOT=Path(__file__).resolve().parent
@@ -79,7 +81,7 @@ with st.sidebar:
     st.header('Your study population')
     st.caption('Define the population, then focus a restaurant to follow its evidence across views.')
     st.selectbox('Motion mode',MODES,key='motion_mode',help='System reduced motion always takes priority. Reduce motion uses only a short fade; Off shows final states immediately.')
-    st.select_slider('Motion speed',options=list(SPEEDS),value='Standard',key='motion_speed')
+    st.select_slider('Motion speed',options=list(SPEEDS),value='Gentle',key='motion_speed')
 motion=MotionSettings(st.session_state.motion_mode,st.session_state.motion_speed)
 if not (Path(snapshot)/'audit.json').exists():
     st.info('No prepared Yelp snapshot is installed. No demonstration data is presented as real Yelp evidence.')
@@ -156,6 +158,7 @@ if tabs[0].open:
 if tabs[1].open:
  with tabs[1]:
     st.caption('02 / TEMPORAL PATTERNS')
+    st.write('**Business question:** Are reviews appearing more frequently, and does the reported experience change at the same time?')
     st.subheader('When does recorded review activity change?')
     st.write('Monthly activity and rating context share the same selected review population. Amber marks the first observed maximum; it is not a significance claim.')
     counts=monthly_reviews(rsel)
@@ -165,6 +168,15 @@ if tabs[1].open:
         with activity_col:chart(monthly_figure(counts),counts,'monthly_reviews')
         with rating_col:chart(monthly_figure(counts,rating=True),counts,'monthly_rating')
         peak=counts.loc[counts.Reviews.idxmax()]
+        render_story(trend_story(counts),'Review activity')
+        st.markdown('#### Alternative view · month-by-year activity heatmap')
+        grid=counts.copy()
+        grid['Year']=grid.Month.astype(str).str[:4]
+        grid['Calendar month']=pd.to_datetime(grid.Month.astype(str)).dt.strftime('%b')
+        order=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+        heat=grid.pivot_table(index='Year',columns='Calendar month',values='Reviews',aggfunc='sum').reindex(columns=order)
+        fig_heat=px.imshow(heat,labels={'x':'Month','y':'Year','color':'Posted reviews'},color_continuous_scale=[[0,'#1b2833'],[.5,'#37998f'],[1,'#5bd7bf']],aspect='auto',title='Review activity by calendar month and year')
+        chart(fig_heat,grid[['Month','Reviews']],'calendar_heatmap')
         st.markdown(f'<div class="citypulse-note">Observed coverage: {len(counts):,} calendar months · Peak posted-review month: {html.escape(str(peak.Month))} ({int(peak.Reviews):,} reviews). Missing months are filled with zero counts; the rating line keeps gaps.</div>',unsafe_allow_html=True)
         with st.expander('Optional temporal replay'):
             st.caption('A progressive reveal of the same monthly counts, with fixed axes. Replay is separate from filters. System reduced-motion preference prevents automatic playback; Replay and Pause remain available.')
@@ -229,6 +241,7 @@ if tabs[2].open:
 if tabs[3].open:
  with tabs[3]:
     st.caption('04 / LANGUAGE & TOPICS')
+    st.write('**Business question:** What keeps appearing in customer feedback, and which original reviews support those patterns?')
     st.subheader('What language shapes the selected reviews?')
     metric=st.radio('Term measure',['documents','occurrences'],horizontal=True)
     term_limit=st.select_slider('Terms shown',options=[10,15,25],value=15)
@@ -238,6 +251,17 @@ if tabs[3].open:
         fig.update_xaxes(title='Reviews containing term' if metric=='documents' else 'Total term occurrences')
         chart(fig,frequency,'review_terms_'+str(st.session_state.get('chart_epoch',0)),lambda pts:st.session_state.update(term=pts[0]['customdata'][0]))
     else:st.info('No usable text vocabulary in this selection.')
+    render_story(review_story(frequency,len(rsel),metric),'Review language')
+    if len(frequency) and len(rsel):
+        st.markdown('#### Alternative view · which restaurants receive which expressions?')
+        st.caption('Cells show the percentage of eligible selected reviews mentioning each displayed expression, not sentiment scores. Restaurants may have very different review counts.')
+        term_subset=frequency.sort_values('Value',ascending=False).Term.head(6).tolist()
+        term_compare=term_by_restaurant(rsel,evidence_b,term_subset)
+        if len(term_compare):
+            matrix=term_compare.pivot(index='Restaurant',columns='Term',values='Percent')
+            hm=px.imshow(matrix,aspect='auto',color_continuous_scale=[[0,'#17242f'],[.5,'#247e82'],[1,'#5bd8c0']],zmin=0,zmax=100,labels={'color':'Reviews mentioning term (%)'},title='Term presence across selected restaurants')
+            hm.update_traces(hovertemplate='%{y}<br>%{x}: %{z:.1f}%<extra></extra>')
+            chart(hm,term_compare,'terms_by_restaurant')
     st.caption('Documents counts at most once per review; occurrences counts repeats. Review terms use the same unigram/bigram tokenizer as the global exact-term filter. Select a bar or use the sidebar.')
     if assignments is not None:
         topic_reviews=rsel.merge(assignments,on='review_id',how='inner')
