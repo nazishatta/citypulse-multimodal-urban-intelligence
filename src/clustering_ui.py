@@ -6,6 +6,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from src.clustering_lab import geographic_summary,shared_audience_summary,text_group_summary
+from src.stories import cluster_story
+from src.story_ui import render_story
 from src.visuals import COLORS,ranked_figure
 
 
@@ -38,9 +40,14 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
                            title='Spatial grouping · DBSCAN / geographic distance')
         fig.update_traces(marker={'size':12,'opacity':0.86})
         chart(fig,grouped[['business_id','name','Group','latitude','longitude']],'cluster_geo')
+        if n_clusters:
+            st.markdown('**Group profiles · actual selected restaurants**')
+            profile=grouped[grouped['Spatial cluster']!=-1].groupby('Group',as_index=False).agg(Restaurants=('business_id','nunique'),Example=('name','first'))
+            st.dataframe(profile,hide_index=True,use_container_width=True)
         st.markdown('**Group sizes**')
         view=counts.assign(Group=counts['Spatial cluster'].map(lambda n:'Unassigned (−1)' if n==-1 else f'Spatial group {n+1}'))
         chart(ranked_figure(view,'Group','Restaurants','Selected restaurants by spatial group','Group'),view[['Group','Restaurants']],'cluster_geo_sizes')
+        render_story(cluster_story(counts,n_noise,radius,min_n),'Spatial groups')
         st.info(f'**What this shows:** DBSCAN identified **{n_clusters} spatial groups** using a {radius:,} m radius and at least {min_n} businesses per group. **{n_noise}** mapped places are unassigned (label −1). Nearby locations do not imply similar ratings or shared audiences.')
     elif method.startswith('Network'):
         st.markdown('#### Which restaurants share observed reviewers?')
