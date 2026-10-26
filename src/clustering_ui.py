@@ -61,7 +61,7 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
         st.caption('The animated scene below uses the same measured DBSCAN assignments. It is the ONLY coordinate scatterplot in this view.')
         st.markdown('**Story mode · how spatial groups are assigned**')
         st.caption('Coordinates stay fixed while the actual DBSCAN group labels are revealed. The final gray points are unassigned (noise).')
-        render_player(cluster_entrance(grouped),key='cluster_reveal',height=535,delay=1900,loop=True)
+        render_player(cluster_entrance(grouped),key='cluster_reveal',height=535,delay={'Quick':1400,'Standard':2350,'Gentle':3400}[st.session_state.get('motion_speed','Standard')],loop=True)
         if n_clusters:
             st.markdown('**Group profiles · actual selected restaurants**')
             profile=grouped[grouped['Spatial cluster']!=-1].groupby('Group',as_index=False).agg(Restaurants=('business_id','nunique'),Example=('name','first'))

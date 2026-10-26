@@ -171,7 +171,7 @@ if tabs[1].open:
         if motion.mode != 'Off' and motion.mode != 'Reduce motion':
             import streamlit.components.v1 as st_components
             motion_fig=temporal_story_frames(counts)
-            st_components.html(motion_fig.to_html(full_html=False,include_plotlyjs=True,auto_play=True,animation_opts={'frame':{'duration':420,'redraw':True},'transition':{'duration':150}}),height=510,scrolling=False)
+            st_components.html(motion_fig.to_html(full_html=False,include_plotlyjs=True,auto_play=True,animation_opts={'frame':{'duration':{'Quick':700,'Standard':1300,'Gentle':2000}[motion.speed],'redraw':True},'transition':{'duration':{'Quick':350,'Standard':550,'Gentle':800}[motion.speed]}}),height=510,scrolling=False)
         else:
             chart(monthly_figure(counts),counts,'guided_activity_static')
         activity_col,rating_col=st.columns([1.25,1],gap='large')
@@ -180,7 +180,7 @@ if tabs[1].open:
         st.markdown('#### Coordinated story · volume and mean rating')
         st.caption('Both measurements progress through the same calendar months. The axes remain fixed. No inference about actual visits or causes is made.')
         if motion.mode not in ('Off','Reduce motion'):
-            render_player(synchronized_trends(counts),key='synced_trends',height=555,delay=850)
+            render_player(synchronized_trends(counts),key='synced_trends',height=555,delay={'Quick':1100,'Standard':1850,'Gentle':2850}[motion.speed])
         peak=counts.loc[counts.Reviews.idxmax()]
         render_story(trend_story(counts),'Review activity')
         st.markdown('#### Alternative view · month-by-year activity heatmap')
@@ -269,7 +269,7 @@ if tabs[3].open:
         st.markdown('#### Guided reveal · which terms dominate?')
         st.caption('Bubbles encode observed term frequency, NOT sentiment, service quality, or distinct machine-learned topics.')
         if motion.mode not in ('Off','Reduce motion'):
-            render_player(topic_bubbles(frequency),key='topic_bubbles',height=550,delay=850)
+            render_player(topic_bubbles(frequency),key='topic_bubbles',height=550,delay={'Quick':1100,'Standard':1850,'Gentle':2850}[motion.speed])
     render_story(review_story(frequency,len(rsel),metric),'Review language')
     if len(frequency):
         st.markdown('#### Alternative visual · review-language landscape')
@@ -406,7 +406,7 @@ if tabs[5].open:
             from pyvis.network import Network
             reduced=st.checkbox('Freeze node movement',value=st.session_state.get('motion_mode','Follow system') == 'Off',key='freeze_network_physics',help='Uncheck to let nodes move and settle. Browser/system reduced-motion settings take priority.')
             net=Network(height='560px',width='100%',cdn_resources='in_line',bgcolor='#18212B',font_color='#F1F6F9',directed=False)
-            net.set_options('{"physics":{"enabled":true,"solver":"forceAtlas2Based","forceAtlas2Based":{"gravitationalConstant":-45,"centralGravity":0.012,"springLength":145,"springConstant":0.035,"damping":0.66},"stabilization":{"enabled":true,"iterations":90,"fit":true}},"interaction":{"hover":true,"dragNodes":true,"navigationButtons":true,"tooltipDelay":120},"edges":{"smooth":false}}')
+            net.set_options('{"physics":{"enabled":true,"solver":"forceAtlas2Based","forceAtlas2Based":{"gravitationalConstant":-45,"centralGravity":0.012,"springLength":145,"springConstant":0.035,"damping":0.82},"stabilization":{"enabled":true,"iterations":360,"fit":true}},"interaction":{"hover":true,"dragNodes":true,"navigationButtons":true,"tooltipDelay":120},"edges":{"smooth":false}}')
             for n in nodes:net.add_node(n,label='',title=html.escape(lookup[n])+f' · {g.degree(n)} connections',size=float(10+2*np.sqrt(g.degree(n))),color=COLORS[membership[n]%len(COLORS)],x=float(pos[n][0]*450),y=float(pos[n][1]*450),physics=not reduced and layout=='Force-directed')
             for a,z,d in view.edges(data=True):net.add_edge(a,z,title=str(d['weight'])+' shared reviewers',width=1,color='rgba(156,178,196,0.28)')
             net.options['physics']['enabled'] = not reduced and layout=='Force-directed'
