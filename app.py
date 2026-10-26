@@ -385,7 +385,7 @@ if tabs[5].open:
         view=g.subgraph(nodes).copy()
         st.caption(f'Displaying {len(view)}/{len(g)} restaurants and {view.number_of_edges()}/{g.number_of_edges()} edges. Community assignments use the selected graph, not the display cap.')
         layout=st.radio('Network layout',['Force-directed','Circular'],horizontal=True)
-        mode=st.radio('Network renderer',['Plotly · select nodes','PyVis · drag nodes'],horizontal=True)
+        mode=st.radio('Network renderer',['PyVis · moving nodes','Plotly · select nodes'],horizontal=True,help='PyVis uses a live physics simulation; Plotly is a stable, selectable final-state view.')
         pos=nx.spring_layout(view,seed=42,weight='weight') if layout=='Force-directed' else nx.circular_layout(view)
         membership=details['membership']
         if mode.startswith('Plotly'):
@@ -404,13 +404,14 @@ if tabs[5].open:
             chart(fig,node_data,'network_nodes_'+str(st.session_state.get('chart_epoch',0)),node_event)
         else:
             from pyvis.network import Network
-            reduced=st.checkbox('Freeze physics / reduced motion',value=True)
-            net=Network(height='560px',width='100%',cdn_resources='in_line',bgcolor='#F5F8FA')
+            reduced=st.checkbox('Freeze node movement',value=st.session_state.get('motion_mode','Follow system') == 'Off',key='freeze_network_physics',help='Uncheck to let nodes move and settle. Browser/system reduced-motion settings take priority.')
+            net=Network(height='560px',width='100%',cdn_resources='in_line',bgcolor='#18212B',font_color='#F1F6F9',directed=False)
+            net.set_options('{"physics":{"enabled":true,"solver":"forceAtlas2Based","forceAtlas2Based":{"gravitationalConstant":-45,"centralGravity":0.012,"springLength":145,"springConstant":0.035,"damping":0.66},"stabilization":{"enabled":true,"iterations":90,"fit":true}},"interaction":{"hover":true,"dragNodes":true,"navigationButtons":true,"tooltipDelay":120},"edges":{"smooth":false}}')
             for n in nodes:net.add_node(n,label='',title=html.escape(lookup[n])+f' · {g.degree(n)} connections',size=float(10+2*np.sqrt(g.degree(n))),color=COLORS[membership[n]%len(COLORS)],x=float(pos[n][0]*450),y=float(pos[n][1]*450),physics=not reduced and layout=='Force-directed')
-            for a,z,d in view.edges(data=True):net.add_edge(a,z,title=str(d['weight'])+' shared reviewers',width=1,color='#B8C1CA')
+            for a,z,d in view.edges(data=True):net.add_edge(a,z,title=str(d['weight'])+' shared reviewers',width=1,color='rgba(156,178,196,0.28)')
             net.toggle_physics(not reduced and layout=='Force-directed')
             st.iframe(child_motion_html(net.generate_html(notebook=False),motion,'pyvis',allow_physics=not reduced and layout=='Force-directed'),height=650,alt='Shared-reviewer network with draggable nodes and motion controls')
-            st.caption('Shared Play/Pause/Show final state controls also govern physics. Continuous physics requires unfreezing it here; system reduced motion and Motion off always stop it. Hover names, drag nodes. PyVis clicks do not update Streamlit; use the synchronized restaurant selector for evidence. Physics is opt-in; circular layout remains fixed.')
+            st.caption('The network is a live browser simulation, not a video. Shared Play/Pause/Show final state controls also govern physics. Continuous physics requires unfreezing it here; system reduced motion and Motion off always stop it. Hover names, drag nodes. PyVis clicks do not update Streamlit; use the synchronized restaurant selector for evidence. Physics is enabled by default in the force-directed view; circular layout remains fixed. Freeze when you need exact positions.')
         order=nodes[:40]
         matrix=nx.to_numpy_array(view,nodelist=order,weight='weight')
         st.markdown('**Compare exact connection strengths**')
