@@ -16,6 +16,7 @@ from src.data import load_snapshot,validate_snapshot,load_topics,resolve_photo,I
 from src.clustering_ui import render_clustering_lab
 from src.stories import trend_story,review_story,term_by_restaurant
 from src.story_ui import render_story
+from src.visual_intelligence import temporal_story_frames,theme_landscape,review_rating_mix
 from src.analysis import select_reviews,monthly_reviews,term_table,restaurant_graph,graph_details,shared_reviewers,spatial_clusters,image_histogram
 
 ROOT=Path(__file__).resolve().parent
@@ -164,6 +165,14 @@ if tabs[1].open:
     counts=monthly_reviews(rsel)
     if counts.empty:st.info('No dated reviews in the selected population.')
     else:
+        st.markdown('#### Guided exploration · review activity through time')
+        st.caption('The first chart reveals observed months in sequence, on a fixed vertical scale. Use Play / Pause / Final to control the story. Motion Off uses an exact static Plotly chart below.')
+        if motion.mode != 'Off' and motion.mode != 'Reduce motion':
+            import streamlit.components.v1 as st_components
+            motion_fig=temporal_story_frames(counts)
+            st_components.html(motion_fig.to_html(full_html=False,include_plotlyjs=True,auto_play=True,animation_opts={'frame':{'duration':420,'redraw':True},'transition':{'duration':150}}),height=510,scrolling=False)
+        else:
+            chart(monthly_figure(counts),counts,'guided_activity_static')
         activity_col,rating_col=st.columns([1.25,1],gap='large')
         with activity_col:chart(monthly_figure(counts),counts,'monthly_reviews')
         with rating_col:chart(monthly_figure(counts,rating=True),counts,'monthly_rating')
@@ -252,6 +261,10 @@ if tabs[3].open:
         chart(fig,frequency,'review_terms_'+str(st.session_state.get('chart_epoch',0)),lambda pts:st.session_state.update(term=pts[0]['customdata'][0]))
     else:st.info('No usable text vocabulary in this selection.')
     render_story(review_story(frequency,len(rsel),metric),'Review language')
+    if len(frequency):
+        st.markdown('#### Alternative visual · review-language landscape')
+        st.caption('Treemap area encodes how often each displayed expression appears under the selected metric. It does not represent positive or negative sentiment.')
+        chart(theme_landscape(frequency),frequency,'language_landscape')
     if len(frequency) and len(rsel):
         st.markdown('#### Alternative view · which restaurants receive which expressions?')
         st.caption('Cells show the percentage of eligible selected reviews mentioning each displayed expression, not sentiment scores. Restaurants may have very different review counts.')
@@ -262,6 +275,12 @@ if tabs[3].open:
             hm=px.imshow(matrix,aspect='auto',color_continuous_scale=[[0,'#17242f'],[.5,'#247e82'],[1,'#5bd8c0']],zmin=0,zmax=100,labels={'color':'Reviews mentioning term (%)'},title='Term presence across selected restaurants')
             hm.update_traces(hovertemplate='%{y}<br>%{x}: %{z:.1f}%<extra></extra>')
             chart(hm,term_compare,'terms_by_restaurant')
+    st.markdown('#### Another perspective · rating distributions')
+    st.caption('A 100%-stacked chart shows the observed mix of 1–5 star reviews for selected restaurants. Unlike text frequencies, these are actual reported ratings—not machine-inferred sentiment.')
+    mix_fig,mix_table=review_rating_mix(rsel,evidence_b)
+    if len(mix_table):
+        chart(mix_fig,mix_table,'review_rating_mix')
+        st.caption('Compare distributions and inspect their denominators in the accessible table. Ratings represent selected posted reviews, not all customers or current business quality.')
     st.caption('Documents counts at most once per review; occurrences counts repeats. Review terms use the same unigram/bigram tokenizer as the global exact-term filter. Select a bar or use the sidebar.')
     if assignments is not None:
         topic_reviews=rsel.merge(assignments,on='review_id',how='inner')
@@ -409,6 +428,9 @@ if tabs[7].open:
  with tabs[7]:
     st.caption('08 / METHODS & INTERPRETATION')
     st.subheader('Understand what the evidence can support')
+    st.markdown('### From source evidence to an operational question')
+    st.markdown('**1. Select a city or restaurant → 2. Inspect posted-review trends → 3. Compare review language → 4. Inspect permitted photographs → 5. Explore shared reviewer groups → 6. Read the original evidence.**')
+    st.markdown('**How a business could use this:** Investigate recurring feedback, prioritize service questions, compare observed neighborhoods, and form testable expansion hypotheses. The application cannot independently estimate demand, revenue, footfall, or causality.')
     st.write('Yelp records are a selected platform snapshot, not a population census. Ratings are reported experiences, not verified business quality. Reviews are not visits; photos are business-linked, not review-linked. Reviewer overlap does not establish social ties.')
     st.write('One immutable snapshot supports all modalities. Category filters use OR; review date, exact term and topic filters use AND. Focus is separate from corpus filtering. Invalid dates are excluded only when applying date filters.')
     st.warning('Rights review and real-data feasibility are not certified by code. Retain the applicable agreement and attribution. Do not commit raw reviews, identity records, image files or generated extracts to public GitHub without checking permissions.')
