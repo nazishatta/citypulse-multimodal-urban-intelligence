@@ -34,6 +34,7 @@ h2 {font-size:1.7rem!important} h3 {font-size:1.25rem!important}
 .citypulse-hero h1 {color:#FFFFFF;font-size:3.35rem;line-height:1.1;margin:0 0 16px;font-weight:760}
 .citypulse-hero p {color:#D3E4EB;max-width:900px;font-size:1.08rem;margin:0;line-height:1.6}
 .citypulse-note {background:#1D3037;border-left:3px solid #58D6C1;padding:14px 18px;border-radius:0 9px 9px 0;margin:12px 0 20px;color:#D1EEEA}
+.citypulse-insight-label{color:#58D6C1;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;font-weight:800}
 .citypulse-kicker {font-size:.75rem;letter-spacing:.12em;color:#A9BBC7;font-weight:700;margin-top:1.5rem}
 .citypulse-filter {display:inline-block;background:#202C35;border:1px solid #4B5C68;border-radius:6px;padding:4px 9px;margin:3px 5px 3px 0;font-size:.8rem;color:#E5F1F4}
 button:focus-visible,a:focus-visible,input:focus-visible,[role="tab"]:focus-visible {outline:3px solid #58D6C1!important;outline-offset:3px!important}
@@ -42,7 +43,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,[role="tab"]:focus-visi
 </style>'''
 HERO='''<section class="citypulse-hero" aria-label="CityPulse research explorer">
 <div class="eyebrow">CITYPULSE / MULTIMODAL URBAN EXPERIENCE</div>
-<h1>CityPulse <span style="font-size:1.1rem;color:#58D6C1;font-weight:500">/ RESEARCH ATLAS</span></h1><p>Explore places, stories, visual culture and shared audiences.<br>One coordinated research population · Seven interactive views.</p></section>'''
+<h1>CityPulse <span style="font-size:1.1rem;color:#58D6C1;font-weight:500">/ RESEARCH ATLAS</span></h1><p>Explore places, stories, visual culture and shared audiences.<br>One coordinated research population · Eight interactive views.</p></section>'''
 
 def wrap_label(value: object,width: int=28) -> str:
     return '<br>'.join(html.escape(line) for line in textwrap.wrap(str(value),width=width,break_long_words=True))
