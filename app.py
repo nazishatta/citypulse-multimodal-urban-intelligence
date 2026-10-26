@@ -435,6 +435,44 @@ if tabs[5].open:
             for n in nodes:net.add_node(n,label='',title=html.escape(lookup[n])+f' · {g.degree(n)} connections',size=float(10+2*np.sqrt(g.degree(n))),color=COLORS[membership[n]%len(COLORS)],x=float(initial[n][0]),y=float(initial[n][1]),physics=physics_enabled)
             for a,z,d in view.edges(data=True):net.add_edge(a,z,title=str(d['weight'])+' shared reviewers',width=1,color='rgba(156,178,196,0.28)')
             net.options['physics']['enabled'] = not reduced and layout=='Force-directed'
+            # PyVis/vis-network browser simulation: a tiny intermittent, deterministic
+            # displacement can restart a settled force layout without fabricating edges.
+            galaxy_html = net.generate_html(notebook=False)
+            if physics_enabled:
+                galaxy_nudge = """<script>
+(function () {
+  function startCityPulseGalaxyNudge() {
+    if (typeof network === 'undefined' || !network || !network.body || !network.body.data) return;
+    let tick = 0;
+    window.setInterval(function () {
+      // Do not move hidden tabs, paused physics, or reduced-motion layouts.
+      if (document.hidden || !network.physics || !network.physics.physicsEnabled) return;
+      const ids = network.body.data.nodes.getIds();
+      if (!ids.length) return;
+      const nodeId = ids[tick % ids.length];
+      tick += 1;
+      const position = network.getPositions([nodeId])[nodeId];
+      if (!position) return;
+      // Amplitude stays small relative to community layout distances.
+      const angle = tick * 2.399963;
+      network.moveNode(nodeId,
+          position.x + Math.cos(angle) * 1.2,
+          position.y + Math.sin(angle) * 1.2);
+      network.startSimulation();
+    }, 2400);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startCityPulseGalaxyNudge, {once:true});
+  } else { startCityPulseGalaxyNudge(); }
+})();
+</script>"""
+                galaxy_html = galaxy_html.replace('</body>', galaxy_nudge + '</body>')
+            st.iframe(
+                child_motion_html(galaxy_html, motion, 'pyvis', allow_physics=physics_enabled),
+                height=780,
+                alt='Live community network with draggable restaurant nodes',
+            )
+
             st.caption('Community Galaxy has live physics (when unfrozen); filtered links define displayed communities. The network is a live browser simulation, not a video. Shared Play/Pause/Show final state controls also govern physics. Continuous physics requires unfreezing it here; system reduced motion and Motion off always stop it. Hover names, drag nodes. PyVis clicks do not update Streamlit; use the synchronized restaurant selector for evidence. Physics is enabled by default in the force-directed view; circular layout remains fixed. Freeze when you need exact positions.')
         order=nodes[:40]
         matrix=nx.to_numpy_array(view,nodelist=order,weight='weight')
