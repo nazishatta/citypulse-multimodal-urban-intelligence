@@ -36,15 +36,24 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
         # Always use a stable, explicit discrete color mapping for group identities.
         names=sorted(grouped.Group.unique()); palette={v:COLORS[i%len(COLORS)] for i,v in enumerate(names)}
         palette['Unassigned (−1)']='#7D8997'
-        fig=px.scatter_map(grouped,lat='latitude',lon='longitude',color='Group',hover_name='name',
-                           hover_data={'business_id':True,'latitude':':.4f','longitude':':.4f'},
-                           color_discrete_map=palette,map_style='carto-darkmatter',zoom=10,height=520,
-                           title='Spatial grouping · DBSCAN / geographic distance')
-        fig.update_traces(marker={'size':12,'opacity':0.86})
+        # Offline-first cluster overview: the same measured coordinates without
+        # depending on blocked or unavailable third-party basemap tiles.
+        fig=px.scatter(grouped,x='longitude',y='latitude',color='Group',hover_name='name',
+                       hover_data={'business_id':True,'latitude':':.5f','longitude':':.5f'},
+                       color_discrete_map=palette,height=500,
+                       title='Restaurant locations · offline cluster overview')
+        fig.update_traces(marker={'size':14,'opacity':0.9,'line':{'width':0.8,'color':'#E6F6F5'}})
+        fig.update_layout(paper_bgcolor='#191F27',plot_bgcolor='#191F27',
+                          font={'color':'#EDF5F8'},
+                          hoverlabel={'bgcolor':'#111A23','bordercolor':'#58D6C1','font':{'color':'#FFFFFF','size':14}},
+                          xaxis={'title':'Longitude','gridcolor':'#34414D'},
+                          yaxis={'title':'Latitude','gridcolor':'#34414D','scaleanchor':'x','scaleratio':1})
+        st.caption('Offline coordinate view: points and DBSCAN colors use the selected restaurant coordinates. '
+                   'No map tiles are needed; longitude and latitude are not business performance metrics.')
         chart(fig,grouped[['business_id','name','Group','latitude','longitude']],'cluster_geo')
         st.markdown('**Story mode · how spatial groups are assigned**')
         st.caption('Coordinates stay fixed while the actual DBSCAN group labels are revealed. The final gray points are unassigned (noise).')
-        render_player(cluster_entrance(grouped),key='cluster_reveal',height=535,delay=1050)
+        render_player(cluster_entrance(grouped),key='cluster_reveal',height=535,delay=1600,loop=True)
         if n_clusters:
             st.markdown('**Group profiles · actual selected restaurants**')
             profile=grouped[grouped['Spatial cluster']!=-1].groupby('Group',as_index=False).agg(Restaurants=('business_id','nunique'),Example=('name','first'))
