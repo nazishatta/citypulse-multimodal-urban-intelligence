@@ -60,7 +60,7 @@ def style_figure(fig: go.Figure,height: int | None=None) -> go.Figure:
         title=dict(x=.035,xanchor='left',y=.96,font=dict(size=17,color=INK)),
         margin=dict(l=35,r=35,t=85,b=75),
         legend=dict(title_text='',orientation='h',y=-.2,x=0,font=dict(size=12)),
-        hoverlabel=dict(bgcolor=INK,font=dict(color='#FFFFFF',size=13)),
+        hoverlabel=dict(bgcolor='#111A23',bordercolor='#58D6C1',font=dict(color='#F5FAFC',size=14)),
         colorway=COLORS,modebar=dict(bgcolor='#191F27',color=MUTED,activecolor=TEAL))
     if not is_map:
         fig.update_xaxes(showline=False,zeroline=False,gridcolor='#34414D',automargin=True,title_font=dict(size=13),tickfont=dict(size=12))
