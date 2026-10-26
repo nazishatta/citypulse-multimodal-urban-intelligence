@@ -409,7 +409,7 @@ if tabs[5].open:
             net.set_options('{"physics":{"enabled":true,"solver":"forceAtlas2Based","forceAtlas2Based":{"gravitationalConstant":-45,"centralGravity":0.012,"springLength":145,"springConstant":0.035,"damping":0.66},"stabilization":{"enabled":true,"iterations":90,"fit":true}},"interaction":{"hover":true,"dragNodes":true,"navigationButtons":true,"tooltipDelay":120},"edges":{"smooth":false}}')
             for n in nodes:net.add_node(n,label='',title=html.escape(lookup[n])+f' · {g.degree(n)} connections',size=float(10+2*np.sqrt(g.degree(n))),color=COLORS[membership[n]%len(COLORS)],x=float(pos[n][0]*450),y=float(pos[n][1]*450),physics=not reduced and layout=='Force-directed')
             for a,z,d in view.edges(data=True):net.add_edge(a,z,title=str(d['weight'])+' shared reviewers',width=1,color='rgba(156,178,196,0.28)')
-            net.toggle_physics(not reduced and layout=='Force-directed')
+            net.options['physics']['enabled'] = not reduced and layout=='Force-directed'
             st.iframe(child_motion_html(net.generate_html(notebook=False),motion,'pyvis',allow_physics=not reduced and layout=='Force-directed'),height=650,alt='Shared-reviewer network with draggable nodes and motion controls')
             st.caption('The network is a live browser simulation, not a video. Shared Play/Pause/Show final state controls also govern physics. Continuous physics requires unfreezing it here; system reduced motion and Motion off always stop it. Hover names, drag nodes. PyVis clicks do not update Streamlit; use the synchronized restaurant selector for evidence. Physics is enabled by default in the force-directed view; circular layout remains fixed. Freeze when you need exact positions.')
         order=nodes[:40]
