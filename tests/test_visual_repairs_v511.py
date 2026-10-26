@@ -9,7 +9,10 @@ def test_plotly_tooltip_contrast_contract():
 
 def test_clustering_map_offline_and_looped():
     src = (Path(__file__).resolve().parents[1] / 'src' / 'clustering_ui.py').read_text()
-    assert "fig=px.scatter(grouped,x='longitude',y='latitude'" in src
+    assert "cluster_size_comparison_v52" in src
+    assert "cluster_inspect_v52" in src
+    assert "cluster_entrance(grouped)" in src
+    assert "px.scatter(grouped" not in src
     assert 'map_style=' not in src
     assert 'loop=True' in src
 
