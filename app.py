@@ -17,6 +17,7 @@ from src.clustering_ui import render_clustering_lab
 from src.stories import trend_story,review_story,term_by_restaurant
 from src.story_ui import render_story
 from src.visual_intelligence import temporal_story_frames,theme_landscape,review_rating_mix
+from src.guided_motion import render_player,topic_bubbles,synchronized_trends
 from src.analysis import select_reviews,monthly_reviews,term_table,restaurant_graph,graph_details,shared_reviewers,spatial_clusters,image_histogram
 
 ROOT=Path(__file__).resolve().parent
@@ -176,6 +177,10 @@ if tabs[1].open:
         activity_col,rating_col=st.columns([1.25,1],gap='large')
         with activity_col:chart(monthly_figure(counts),counts,'monthly_reviews')
         with rating_col:chart(monthly_figure(counts,rating=True),counts,'monthly_rating')
+        st.markdown('#### Coordinated story · volume and mean rating')
+        st.caption('Both measurements progress through the same calendar months. The axes remain fixed. No inference about actual visits or causes is made.')
+        if motion.mode not in ('Off','Reduce motion'):
+            render_player(synchronized_trends(counts),key='synced_trends',height=555,delay=850)
         peak=counts.loc[counts.Reviews.idxmax()]
         render_story(trend_story(counts),'Review activity')
         st.markdown('#### Alternative view · month-by-year activity heatmap')
@@ -260,6 +265,11 @@ if tabs[3].open:
         fig.update_xaxes(title='Reviews containing term' if metric=='documents' else 'Total term occurrences')
         chart(fig,frequency,'review_terms_'+str(st.session_state.get('chart_epoch',0)),lambda pts:st.session_state.update(term=pts[0]['customdata'][0]))
     else:st.info('No usable text vocabulary in this selection.')
+    if len(frequency):
+        st.markdown('#### Guided reveal · which terms dominate?')
+        st.caption('Bubbles encode observed term frequency, NOT sentiment, service quality, or distinct machine-learned topics.')
+        if motion.mode not in ('Off','Reduce motion'):
+            render_player(topic_bubbles(frequency),key='topic_bubbles',height=550,delay=850)
     render_story(review_story(frequency,len(rsel),metric),'Review language')
     if len(frequency):
         st.markdown('#### Alternative visual · review-language landscape')
