@@ -36,24 +36,32 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
         # Always use a stable, explicit discrete color mapping for group identities.
         names=sorted(grouped.Group.unique()); palette={v:COLORS[i%len(COLORS)] for i,v in enumerate(names)}
         palette['Unassigned (−1)']='#7D8997'
-        # Offline-first cluster overview: the same measured coordinates without
-        # depending on blocked or unavailable third-party basemap tiles.
-        fig=px.scatter(grouped,x='longitude',y='latitude',color='Group',hover_name='name',
-                       hover_data={'business_id':True,'latitude':':.5f','longitude':':.5f'},
-                       color_discrete_map=palette,height=500,
-                       title='Restaurant locations · offline cluster overview')
-        fig.update_traces(marker={'size':14,'opacity':0.9,'line':{'width':0.8,'color':'#E6F6F5'}})
-        fig.update_layout(paper_bgcolor='#191F27',plot_bgcolor='#191F27',
+        # Cluster intelligence first: avoid a duplicate of the animated geographic plot below.
+        st.markdown('**Cluster comparison · how large is each restaurant group?**')
+        comparison=counts.assign(Group=counts['Spatial cluster'].map(lambda n:'Unassigned (−1)' if n==-1 else f'Spatial group {n+1}'))
+        comparison=comparison.sort_values(['Restaurants','Group'],ascending=[False,True])
+        bar=px.bar(comparison,x='Restaurants',y='Group',orientation='h',color='Group',
+                   color_discrete_map=palette,text='Restaurants',height=300,
+                   title='Measured group sizes · selected restaurants')
+        bar.update_layout(showlegend=False,yaxis={'categoryorder':'total ascending'},
+                          paper_bgcolor='#191F27',plot_bgcolor='#191F27',
                           font={'color':'#EDF5F8'},
-                          hoverlabel={'bgcolor':'#111A23','bordercolor':'#58D6C1','font':{'color':'#FFFFFF','size':14}},
-                          xaxis={'title':'Longitude','gridcolor':'#34414D'},
-                          yaxis={'title':'Latitude','gridcolor':'#34414D','scaleanchor':'x','scaleratio':1})
-        st.caption('Offline coordinate view: points and DBSCAN colors use the selected restaurant coordinates. '
-                   'No map tiles are needed; longitude and latitude are not business performance metrics.')
-        chart(fig,grouped[['business_id','name','Group','latitude','longitude']],'cluster_geo')
+                          hoverlabel={'bgcolor':'#111A23','font':{'color':'#FFFFFF'}})
+        chart(bar,comparison[['Group','Restaurants']],'cluster_size_comparison_v52')
+        chosen=st.selectbox('Explore a detected spatial group',
+             [v for v in comparison.Group if not v.startswith('Unassigned')],
+             index=0,key='cluster_inspect_v52') if n_clusters else None
+        if chosen:
+            members=grouped[grouped.Group==chosen]
+            st.markdown(f'**{chosen}: {len(members)} restaurants**')
+            st.caption('These restaurants are geographically close under the chosen DBSCAN settings; the cluster does not establish economic demand or reviewer similarity.')
+            fields=[x for x in ['name','business_id','stars','review_count'] if x in members.columns]
+            st.dataframe(members[fields].rename(columns={'name':'Restaurant','stars':'Snapshot stars','review_count':'Yelp snapshot review count'}),
+                         hide_index=True,use_container_width=True)
+        st.caption('The animated scene below uses the same measured DBSCAN assignments. It is the ONLY coordinate scatterplot in this view.')
         st.markdown('**Story mode · how spatial groups are assigned**')
         st.caption('Coordinates stay fixed while the actual DBSCAN group labels are revealed. The final gray points are unassigned (noise).')
-        render_player(cluster_entrance(grouped),key='cluster_reveal',height=535,delay=1600,loop=True)
+        render_player(cluster_entrance(grouped),key='cluster_reveal',height=535,delay=1900,loop=True)
         if n_clusters:
             st.markdown('**Group profiles · actual selected restaurants**')
             profile=grouped[grouped['Spatial cluster']!=-1].groupby('Group',as_index=False).agg(Restaurants=('business_id','nunique'),Example=('name','first'))
@@ -62,9 +70,6 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
             st.markdown('**What distinguishes these groups? · measured profiles**')
             st.dataframe(richer,hide_index=True,use_container_width=True)
             st.caption('Ratings in this profile are the dataset’s business snapshot ratings, not means of the currently selected reviews. Compare these separately.')
-        st.markdown('**Group sizes**')
-        view=counts.assign(Group=counts['Spatial cluster'].map(lambda n:'Unassigned (−1)' if n==-1 else f'Spatial group {n+1}'))
-        chart(ranked_figure(view,'Group','Restaurants','Selected restaurants by spatial group','Group'),view[['Group','Restaurants']],'cluster_geo_sizes')
         render_story(cluster_story(counts,n_noise,radius,min_n),'Spatial groups')
         st.info(f'**What this shows:** DBSCAN identified **{n_clusters} spatial groups** using a {radius:,} m radius and at least {min_n} businesses per group. **{n_noise}** mapped places are unassigned (label −1). Nearby locations do not imply similar ratings or shared audiences.')
     elif method.startswith('Network'):
