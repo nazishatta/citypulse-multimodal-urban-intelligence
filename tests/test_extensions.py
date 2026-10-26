@@ -23,7 +23,7 @@ def test_network_modes_and_neighborhood(snapshot):
  at=AppTest.from_file(str(Path(__file__).parents[1]/'app.py'),default_timeout=45).run()
  at.session_state['view']='Networks';at.run();assert not at.exception
  renderer=next(x for x in at.radio if x.label=='Network renderer')
- renderer.set_value('PyVis · drag nodes').run();assert not at.exception
+ renderer.set_value('PyVis · moving nodes').run();assert not at.exception
  layout=next(x for x in at.radio if x.label=='Network layout')
  layout.set_value('Circular').run();assert not at.exception
  at.selectbox(key='_network_focus_widget').set_value('b0').run();assert not at.exception
