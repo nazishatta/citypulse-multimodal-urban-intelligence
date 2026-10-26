@@ -11,6 +11,7 @@ from src.story_ui import render_story
 from src.visual_intelligence import cluster_profile
 from src.guided_motion import cluster_entrance,render_player
 from src.visuals import COLORS,ranked_figure
+from src.cluster_comparison_v55 import build_profiles, comparison_figure, group_takeaway
 
 
 def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,preview_mode):
@@ -37,6 +38,33 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
         names=sorted(grouped.Group.unique()); palette={v:COLORS[i%len(COLORS)] for i,v in enumerate(names)}
         palette['Unassigned (−1)']='#7D8997'
         # Cluster intelligence first: avoid a duplicate of the animated geographic plot below.
+        # v5.5: complementary, selected-population cluster comparisons.
+        st.markdown('#### Cluster intelligence · compare size, platform activity and composition')
+        v55_view=st.radio('Cluster comparison view',
+            ['Exact size bars','Bubble profile','Treemap','Category mix'],
+            horizontal=True,key='cluster_comparison_view_v55')
+        v55_profiles=build_profiles(grouped)
+        v55_groups=v55_profiles[~v55_profiles.Group.str.startswith('Unassigned')]
+        if v55_groups.empty:
+            st.info('No qualifying spatial group at these DBSCAN settings. The unassigned locations are not a business cluster.')
+        else:
+            v55_names=v55_groups.Group.tolist()
+            v55_active=st.selectbox('Highlight spatial group',v55_names,key='cluster_comparison_focus_v55')
+            v55_fig,v55_evidence=comparison_figure(v55_profiles,grouped,v55_view,v55_active)
+            if v55_fig.data:
+                chart(v55_fig,v55_evidence,'cluster_comparison_v55_'+v55_view.lower().replace(' ','_'))
+            else:
+                st.info('This view requires recorded snapshot ratings, review counts or categories. No values are filled in.')
+            t,why,use=group_takeaway(v55_profiles,v55_active)
+            st.markdown('**What this shows**')
+            st.write(t)
+            st.markdown('**Why it matters**')
+            st.write(why)
+            st.markdown('**How a company can use it**')
+            st.write(use)
+            st.markdown('**Measured group profiles**')
+            st.dataframe(v55_profiles,hide_index=True,width='stretch')
+            st.caption('Bubble size = distinct restaurants; horizontal = mean Yelp business snapshot stars; vertical = mean snapshot review count. Reviews are platform activity, not verified demand. Primary listed category composition uses one category per restaurant, not all overlapping labels.')
         st.markdown('**Cluster comparison · how large is each restaurant group?**')
         comparison=counts.assign(Group=counts['Spatial cluster'].map(lambda n:'Unassigned (−1)' if n==-1 else f'Spatial group {n+1}'))
         comparison=comparison.sort_values(['Restaurants','Group'],ascending=[False,True])
