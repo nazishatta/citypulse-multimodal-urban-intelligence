@@ -384,10 +384,21 @@ if tabs[5].open:
         nodes=([nf]+sorted(g.neighbors(nf),key=lambda n:(-g[nf][n]['weight'],n)))[:cap] if nf else ranking.business_id.head(cap).tolist()
         view=g.subgraph(nodes).copy()
         st.caption(f'Displaying {len(view)}/{len(g)} restaurants and {view.number_of_edges()}/{g.number_of_edges()} edges. Community assignments use the selected graph, not the display cap.')
+        strongest=max((int(d['weight']) for _,_,d in view.edges(data=True)),default=1)
+        cutoff=st.slider('Minimum shared reviewers per visible connection',1,max(1,strongest),min(2,max(1,strongest)),help='This filters visible edges only. The underlying reviewed population and full-graph metrics do not change.')
+        view.remove_edges_from([(u,v) for u,v,d in view.edges(data=True) if int(d['weight'])<cutoff])
+        st.caption(f'Community Galaxy displays {view.number_of_edges()} edges with at least {cutoff} shared reviewer(s). Full graph above remains unchanged; isolated nodes stay visible.')
         layout=st.radio('Network layout',['Force-directed','Circular'],horizontal=True)
         mode=st.radio('Network renderer',['PyVis · moving nodes','Plotly · select nodes'],horizontal=True,help='PyVis uses a live physics simulation; Plotly is a stable, selectable final-state view.')
         pos=nx.spring_layout(view,seed=42,weight='weight') if layout=='Force-directed' else nx.circular_layout(view)
-        membership=details['membership']
+        if view.number_of_edges():
+            communities=list(nx.algorithms.community.greedy_modularity_communities(view,weight='weight'))
+        else:
+            communities=[{n} for n in view.nodes]
+        membership={n:i for i,comm in enumerate(communities) for n in comm}
+        if communities:
+            sizes=sorted([len(c) for c in communities],reverse=True)
+            st.caption(f'Displayed graph: {len(communities)} computed communities; sizes {sizes[:12]}. Membership here is recalculated after filtering visible links, and can differ from full-graph assignments.')
         if mode.startswith('Plotly'):
             ex=[];ey=[]
             for a,z in view.edges:ex.extend([pos[a][0],pos[z][0],None]);ey.extend([pos[a][1],pos[z][1],None])
@@ -405,13 +416,26 @@ if tabs[5].open:
         else:
             from pyvis.network import Network
             reduced=st.checkbox('Freeze node movement',value=st.session_state.get('motion_mode','Follow system') == 'Off',key='freeze_network_physics',help='Uncheck to let nodes move and settle. Browser/system reduced-motion settings take priority.')
-            net=Network(height='560px',width='100%',cdn_resources='in_line',bgcolor='#18212B',font_color='#F1F6F9',directed=False)
-            net.set_options('{"physics":{"enabled":true,"solver":"forceAtlas2Based","forceAtlas2Based":{"gravitationalConstant":-45,"centralGravity":0.012,"springLength":145,"springConstant":0.035,"damping":0.82},"stabilization":{"enabled":true,"iterations":360,"fit":true}},"interaction":{"hover":true,"dragNodes":true,"navigationButtons":true,"tooltipDelay":120},"edges":{"smooth":false}}')
-            for n in nodes:net.add_node(n,label='',title=html.escape(lookup[n])+f' · {g.degree(n)} connections',size=float(10+2*np.sqrt(g.degree(n))),color=COLORS[membership[n]%len(COLORS)],x=float(pos[n][0]*450),y=float(pos[n][1]*450),physics=not reduced and layout=='Force-directed')
+            energy=st.select_slider('Community motion energy',options=['Calm','Standard','Lively','High energy'],value='Calm',help='Controls the visible physics simulation. Choose Freeze to hold a stable arrangement.')
+            net=Network(height='680px',width='100%',cdn_resources='in_line',bgcolor='#18212B',font_color='#F1F6F9',directed=False)
+            physics_enabled=not reduced and layout=='Force-directed'
+            # Keep vis-network physics active; do not auto-stabilize and freeze.
+            force={'Calm':-125,'Standard':-165,'Lively':-210,'High energy':-260}[energy]
+            spring={'Calm':.025,'Standard':.035,'Lively':.05,'High energy':.07}[energy]
+            net.set_options(json.dumps({'physics':{'enabled':physics_enabled,'solver':'forceAtlas2Based','forceAtlas2Based':{'gravitationalConstant':force,'centralGravity':.003,'springLength':210,'springConstant':spring,'damping':.76},'stabilization':{'enabled':False},'minVelocity':.02,'timestep':.25},'interaction':{'hover':True,'dragNodes':True,'navigationButtons':True,'tooltipDelay':110},'nodes':{'font':{'size':13,'color':'#F4F7F9'}},'edges':{'smooth':False}}))
+            # Community-aware starting positions, while allowing live physics to evolve them.
+            community_nodes={i:sorted(comm) for i,comm in enumerate(communities)}
+            centers={i:(700*float(np.cos(2*np.pi*i/max(1,len(communities)))),520*float(np.sin(2*np.pi*i/max(1,len(communities))))) for i in community_nodes}
+            initial={}
+            for cid, members in community_nodes.items():
+                sub=view.subgraph(members)
+                subpos=nx.spring_layout(sub,seed=42,weight='weight') if len(sub)>1 else {members[0]:np.array([0.,0.])}
+                cx,cy=centers[cid]
+                for n in members:initial[n]=(cx+subpos[n][0]*105,cy+subpos[n][1]*105)
+            for n in nodes:net.add_node(n,label='',title=html.escape(lookup[n])+f' · {g.degree(n)} connections',size=float(10+2*np.sqrt(g.degree(n))),color=COLORS[membership[n]%len(COLORS)],x=float(initial[n][0]),y=float(initial[n][1]),physics=physics_enabled)
             for a,z,d in view.edges(data=True):net.add_edge(a,z,title=str(d['weight'])+' shared reviewers',width=1,color='rgba(156,178,196,0.28)')
             net.options['physics']['enabled'] = not reduced and layout=='Force-directed'
-            st.iframe(child_motion_html(net.generate_html(notebook=False),motion,'pyvis',allow_physics=not reduced and layout=='Force-directed'),height=650,alt='Shared-reviewer network with draggable nodes and motion controls')
-            st.caption('The network is a live browser simulation, not a video. Shared Play/Pause/Show final state controls also govern physics. Continuous physics requires unfreezing it here; system reduced motion and Motion off always stop it. Hover names, drag nodes. PyVis clicks do not update Streamlit; use the synchronized restaurant selector for evidence. Physics is enabled by default in the force-directed view; circular layout remains fixed. Freeze when you need exact positions.')
+            st.caption('Community Galaxy has live physics (when unfrozen); filtered links define displayed communities. The network is a live browser simulation, not a video. Shared Play/Pause/Show final state controls also govern physics. Continuous physics requires unfreezing it here; system reduced motion and Motion off always stop it. Hover names, drag nodes. PyVis clicks do not update Streamlit; use the synchronized restaurant selector for evidence. Physics is enabled by default in the force-directed view; circular layout remains fixed. Freeze when you need exact positions.')
         order=nodes[:40]
         matrix=nx.to_numpy_array(view,nodelist=order,weight='weight')
         st.markdown('**Compare exact connection strengths**')
