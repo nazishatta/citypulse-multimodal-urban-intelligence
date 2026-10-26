@@ -9,7 +9,7 @@ import plotly.io as pio
 
 DARK='#191F27'; TEAL='#5CD8C0'; AMBER='#F2B777'; PURPLE='#9B8CEF'
 
-def player_html(fig:go.Figure, *, delay:int=820, autoplay:bool=True)->str:
+def player_html(fig:go.Figure, *, delay:int=820, autoplay:bool=True, loop:bool=False)->str:
     """Embed one independently controllable Plotly scene. No continuous rerun timers."""
     figure=pio.to_html(fig,full_html=False,include_plotlyjs=True,auto_play=False,config={'displaylogo':False,'responsive':True})
     frames=[f.name for f in fig.frames]
@@ -19,17 +19,17 @@ def player_html(fig:go.Figure, *, delay:int=820, autoplay:bool=True)->str:
 .controls{{display:flex;gap:8px;flex-wrap:wrap;padding:8px 10px;align-items:center}}button{{background:#253440;border:1px solid #48606b;color:#eefaff;border-radius:8px;padding:9px 14px;cursor:pointer}}button:focus-visible{{outline:2px solid {TEAL}}}
 progress{{width:160px;accent-color:{TEAL}}}small{{color:#aebfc9}}</style></head><body>{figure}<div class="controls">
 <button id="play">▶ Play</button><button id="pause">Ⅱ Pause</button><button id="again">↺ Replay</button><button id="final">Show final state</button><progress id="progress" value="0" max="{max(len(frames)-1,1)}"></progress><small id="status" aria-live="polite">Ready</small></div>
-<script>(function(){{const gd=document.querySelector('.plotly-graph-div');const names={names};let at=0,timer=null;const delay={int(delay)};const bar=document.querySelector('#progress'),status=document.querySelector('#status');
-function stop(){{if(timer!==null)clearTimeout(timer);timer=null;}}function show(i){{at=i;Plotly.animate(gd,[names[i]],{{mode:'immediate',frame:{{duration:0,redraw:true}},transition:{{duration:0}}}});bar.value=i;status.textContent='Step '+(i+1)+' of '+names.length;}}
-function play(){{stop();function tick(){{if(at>=names.length-1){{stop();return;}}show(at+1);timer=setTimeout(tick,delay);}}timer=setTimeout(tick,delay);}}
+<script>(function(){{const gd=document.querySelector('.plotly-graph-div');const names={names};let at=0,timer=null;const delay={int(delay)},loop={str(loop).lower()};let repeat=null;const bar=document.querySelector('#progress'),status=document.querySelector('#status');
+function stop(){{if(timer!==null)clearTimeout(timer);if(repeat!==null)clearTimeout(repeat);timer=null;repeat=null;}}function show(i){{at=i;Plotly.animate(gd,[names[i]],{{mode:'immediate',frame:{{duration:0,redraw:true}},transition:{{duration:0}}}});bar.value=i;status.textContent='Step '+(i+1)+' of '+names.length;}}
+function play(){{stop();function tick(){{if(at>=names.length-1){{timer=null;if(loop)repeat=setTimeout(()=>{{show(0);play();}},2600);return;}}show(at+1);timer=setTimeout(tick,delay);}}timer=setTimeout(tick,delay);}}
 document.querySelector('#play').onclick=play;document.querySelector('#pause').onclick=stop;document.querySelector('#again').onclick=()=>{{stop();show(0);play();}};document.querySelector('#final').onclick=()=>{{stop();show(names.length-1);}};
 const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;window.addEventListener('pagehide',stop);setTimeout(()=>{{show(reduce||!{str(autoplay).lower()}?names.length-1:0);if(!reduce&&{str(autoplay).lower()})play();}},180);
 }})();</script></body></html>"""
 
-def render_player(fig,*,key:str,height:int=540,delay:int=820,autoplay:bool=True):
+def render_player(fig,*,key:str,height:int=540,delay:int=820,autoplay:bool=True,loop:bool=False):
     if not fig.frames:return
     import streamlit.components.v1 as components
-    components.html(player_html(fig,delay=delay,autoplay=autoplay),height=height,scrolling=False)
+    components.html(player_html(fig,delay=delay,autoplay=autoplay,loop=loop),height=height,scrolling=False)
 
 def topic_bubbles(terms:pd.DataFrame,max_terms:int=12)->go.Figure:
     """Stages progressively reveal term bubbles; frequency means appearances, not positive sentiment."""
