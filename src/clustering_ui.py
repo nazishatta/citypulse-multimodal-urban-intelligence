@@ -9,6 +9,7 @@ from src.clustering_lab import geographic_summary,shared_audience_summary,text_g
 from src.stories import cluster_story
 from src.story_ui import render_story
 from src.visual_intelligence import cluster_profile
+from src.guided_motion import cluster_entrance,render_player
 from src.visuals import COLORS,ranked_figure
 
 
@@ -41,6 +42,9 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
                            title='Spatial grouping · DBSCAN / geographic distance')
         fig.update_traces(marker={'size':12,'opacity':0.86})
         chart(fig,grouped[['business_id','name','Group','latitude','longitude']],'cluster_geo')
+        st.markdown('**Story mode · how spatial groups are assigned**')
+        st.caption('Coordinates stay fixed while the actual DBSCAN group labels are revealed. The final gray points are unassigned (noise).')
+        render_player(cluster_entrance(grouped),key='cluster_reveal',height=535,delay=1050)
         if n_clusters:
             st.markdown('**Group profiles · actual selected restaurants**')
             profile=grouped[grouped['Spatial cluster']!=-1].groupby('Group',as_index=False).agg(Restaurants=('business_id','nunique'),Example=('name','first'))
