@@ -136,6 +136,7 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
         a.metric('Network communities',provenance['communities']);b.metric('Shared-reviewer links',g.number_of_edges());c.metric('Connected restaurants',sum(d>0 for _,d in g.degree()))
         rank=ranking.sort_values(['Shared-reviewer strength','business_id'],ascending=[False,True])
         members=rank.business_id.head(cap).tolist(); view=g.subgraph(members)
+        st.markdown('**Business interpretation · overlapping audiences**'); st.caption('Shared reviewers reveal overlapping platform audiences. Companies can investigate competitive relationships and potential partnerships, but reviewer overlap does not prove customer migration or sales.')
         from src.live_audience_v551 import render_live_audience
         st.markdown('**Live reviewer-community network · drag nodes, hover for evidence**')
         v551_freeze=st.checkbox('Freeze this network',value=st.session_state.get('motion_mode')=='Off',key='cluster_network_freeze_v551')
