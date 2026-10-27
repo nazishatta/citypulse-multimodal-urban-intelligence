@@ -20,7 +20,13 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
     st.write('Explore **nearby places**, **overlapping reviewer audiences**, and **similar review themes**. These are three different analytical concepts—not three answers to the same clustering problem.')
     if preview_mode:
         st.info('DEMONSTRATION DATA: these clustering results use fictional restaurants and generated reviews. They are not Yelp findings.')
-    method=st.radio('Choose a grouping question', ['Geographic · nearby places','Network · shared audiences','Text · review themes'],horizontal=True,key='cluster_method')
+    v551_topics,v551_eligible=text_group_summary(rsel,assignments,labels)
+    available_methods=['Geographic · nearby places','Network · shared audiences']
+    if not v551_topics.empty:
+        available_methods.append('Text · review themes')
+    method=st.radio('Choose a grouping question', available_methods,horizontal=True,key='cluster_method')
+    if v551_topics.empty:
+        st.caption('Text topic grouping is unavailable until verified NMF artifacts are installed; it is not offered as an empty view.')
     if method.startswith('Geographic'):
         st.markdown('#### Where are restaurants geographically concentrated?')
         c1,c2=st.columns(2)
@@ -40,8 +46,17 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
         # Cluster intelligence first: avoid a duplicate of the animated geographic plot below.
         # v5.5: complementary, selected-population cluster comparisons.
         st.markdown('#### Cluster intelligence · compare size, platform activity and composition')
+        from src.cluster_comparison_v55 import category_composition
+        v55_profiles=build_profiles(grouped)
+        v55_valid=v55_profiles[~v55_profiles.Group.str.startswith('Unassigned')]
+        v55_available=['Exact size bars','Treemap']
+        if not v55_valid.empty and v55_valid[['Mean snapshot stars','Mean snapshot review count']].notna().all(axis=None):
+            v55_available.append('Bubble profile')
+        v55_mix=category_composition(grouped)
+        if not v55_mix.empty and (v55_mix.groupby('Group').Category.nunique().max()>1 or v55_mix.Category.nunique()>1):
+            v55_available.append('Category mix')
         v55_view=st.radio('Cluster comparison view',
-            ['Exact size bars','Bubble profile','Treemap','Category mix'],
+            v55_available,
             horizontal=True,key='cluster_comparison_view_v55')
         v55_profiles=build_profiles(grouped)
         v55_groups=v55_profiles[~v55_profiles.Group.str.startswith('Unassigned')]
@@ -62,6 +77,10 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
             st.write(why)
             st.markdown('**How a company can use it**')
             st.write(use)
+            st.markdown(f'**Selected group: {v55_active}**')
+            v551_selected=grouped[grouped.Group==v55_active]
+            v551_fields=[x for x in ['name','business_id','stars','review_count','categories'] if x in v551_selected.columns]
+            st.dataframe(v551_selected[v551_fields],hide_index=True,width='stretch')
             st.markdown('**Measured group profiles**')
             st.dataframe(v55_profiles,hide_index=True,width='stretch')
             st.caption('Bubble size = distinct restaurants; horizontal = mean Yelp business snapshot stars; vertical = mean snapshot review count. Reviews are platform activity, not verified demand. Primary listed category composition uses one category per restaurant, not all overlapping labels.')
@@ -117,22 +136,12 @@ def render_clustering_lab(evidence_b,rsel,assignments,labels,lookup,chart,previe
         a.metric('Network communities',provenance['communities']);b.metric('Shared-reviewer links',g.number_of_edges());c.metric('Connected restaurants',sum(d>0 for _,d in g.degree()))
         rank=ranking.sort_values(['Shared-reviewer strength','business_id'],ascending=[False,True])
         members=rank.business_id.head(cap).tolist(); view=g.subgraph(members)
-        pos=nx.spring_layout(view,seed=42,weight='weight')
-        xs=[];ys=[]
-        for u,v in view.edges():xs.extend([pos[u][0],pos[v][0],None]);ys.extend([pos[u][1],pos[v][1],None])
-        fig=go.Figure(go.Scatter(x=xs,y=ys,mode='lines',line=dict(color='rgba(175,192,209,.22)',width=1),hoverinfo='skip',showlegend=False))
-        groups=rank.set_index('business_id').Community.to_dict()
-        fig.add_trace(go.Scatter(x=[pos[i][0] for i in members],y=[pos[i][1] for i in members],mode='markers',
-                  marker=dict(size=[10+2*float(g.degree(i))**0.5 for i in members],color=[COLORS[int(groups[i])%len(COLORS)] for i in members],line=dict(width=1,color='#DAE4EB')),
-                  customdata=[[i,int(groups[i]),int(g.degree(i))] for i in members],text=[lookup.get(i,i) for i in members],
-                  hovertemplate='%{text}<br>Community %{customdata[1]}<br>Connections %{customdata[2]}<extra></extra>',showlegend=False))
-        fig.update_layout(title='Reviewer-overlap graph · algorithmic communities',height=540,xaxis_visible=False,yaxis_visible=False)
-        fig.update_yaxes(scaleanchor='x')
-        chart(fig,rank.assign(Restaurant=rank.business_id.map(lookup)),'cluster_network')
-        st.markdown('**Business interpretation · overlapping audiences**')
-        st.write('**What this shows:** Observed reviewer-overlap communities; stronger edges represent more distinct overlapping review accounts.')
-        st.write('**Why it matters:** This can suggest which businesses deserve competitive or customer-audience comparison, but it cannot establish that reviewers visited both businesses or that they are substitutable.')
-        st.write('**Next action:** Inspect the strongest pairs and compare their review themes and published categories before drawing any commercial conclusion.')
+        from src.live_audience_v551 import render_live_audience
+        st.markdown('**Live reviewer-community network · drag nodes, hover for evidence**')
+        v551_freeze=st.checkbox('Freeze this network',value=st.session_state.get('motion_mode')=='Off',key='cluster_network_freeze_v551')
+        render_live_audience(view,rank.set_index('business_id').Community.to_dict(),lookup,
+                             colors=COLORS,freeze=v551_freeze,height=550)
+        st.dataframe(rank[['business_id','Community','Shared-reviewer strength']],hide_index=True,width='stretch')
         st.info(f'**What this shows:** {provenance["communities"]} algorithmic communities from {g.number_of_edges()} observed links (at least {threshold} distinct shared reviewers per edge). The figure shows {len(members)} of {len(g)} graph nodes. Connections are **not** friendship or restaurant partnerships; layout distance is not geographic distance.')
     else:
         st.markdown('#### Which review themes appear together in the selected population?')
